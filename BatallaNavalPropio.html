@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalla Naval</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div id="menu" class="col-sm-12 col-lg-12">
+                <h1>Batalla Naval</h1>
+            </div>
+        </div>
+        <div class="row">
+            <br>
+            <div class="menu col-sm-12 col-lg-12">
+                <label for="tamaño">Tamaño:</label>
+                <input type="number" id="tamaño" name="tamaño">
+                <button type="button" class="btn btn-primary" id="agregarBarcos">Agregar Barcos</button>
+                <label for="jugar">Jugar:</label>
+                <button type="button" class="btn btn-primary" id="jugar">Jugar</button>
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div id="miTablero" class="col-sm-12 col-lg-6">
+                <table class="table" id="tablaJugador">
+                    <thead>
+                        <tr>
+                            <th colspan="6">Tu tablero</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <div id="tablerPC" class="col-sm-12 col-lg-6">
+                <table class="table" id="tablaPC">
+                    <thead>
+                        <tr>
+                            <th colspan="6">Tablero PC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JS, Popper.js y jQuery de Bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var tamaño = 0;
+            var letras = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+            var tablaJugador = $('#tablaJugador tbody');
+            var tablaPC = $('#tablaPC tbody');
+            var totalBarcos = 0;
+
+            // Evento para el campo de tamaño
+            $('#tamaño').change(function() {
+                tamaño = parseInt($(this).val());
+                if (tamaño >= 1 && tamaño <= 10) {
+                    totalBarcos = calcularTotalBarcos(tamaño); 
+                    generarTableros(tamaño);
+                    $('#agregarBarcos').prop('disabled', false);
+                } else {
+                    alert("Ingrese un valor válido para el tamaño. Mínimo 0 y máximo 10.");
+                }
+            });
+
+            // Evento para agregar barcos manualmente
+            $('#agregarBarcos').click(function() {
+                $('#tablaJugador td').click(function() {
+                    var fila = $(this).parent().index() + 1;
+                    var columna = $(this).index() + 1;
+
+                    if ($(this).text() === '🌊') {
+                        $(this).text('🚢');
+                    } else if ($(this).text() === '🚢') {
+                        $(this).text('🌊');
+                    }
+                });
+
+                
+                $('#agregarBarcos').prop('disabled', true);
+            });
+
+            // Evento para activar el juego
+            $('#jugar').click(function() {
+                var tableroPC = llenarTableroPCAleatoriamente(tamaño);
+                $('#jugar').text("Reiniciar");
+
+                $('#tablaPC td').click(function() {
+                    var fila = $(this).parent().index();
+                    var columna = $(this).index();
+
+                    if (tableroPC[fila][columna] === '🚢') {
+                        $(this).text('💥');
+                    } else if (tableroPC[fila][columna] === '🌊') {
+                        $(this).text('📍');
+                    }
+
+                    ataquePC();
+                    ganarJuego();
+                });
+
+                $('#jugar').click(function() {
+                    location.reload();
+                });
+            });
+
+            
+
+            // Función para generar los tableros
+            function generarTableros(tamaño) {
+                tablaJugador.empty();
+                tablaPC.empty();
+
+                for (var i = 0; i <= tamaño; i++) {
+                    var filaJugador = $('<tr>');
+                    var filaPC = $('<tr>');
+
+                    for (var j = 0; j <= tamaño; j++) {
+                        if (i === 0) {
+                            if (j === 0) {
+                                filaJugador.append('<td></td>');
+                                filaPC.append('<td></td>');
+                            } else {
+                                filaJugador.append('<td>' + j + '</td>');
+                                filaPC.append('<td>' + j + '</td>');
+                            }
+                        } else {
+                            if (j === 0) {
+                                filaJugador.append('<td>' + letras[i - 1] + '</td>');
+                                filaPC.append('<td>' + letras[i - 1] + '</td>');
+                            } else {
+                                filaJugador.append('<td>🌊</td>');
+                                filaPC.append('<td>🌊</td>');
+                            }
+                        }
+                    }
+
+                    tablaJugador.append(filaJugador);
+                    tablaPC.append(filaPC);
+                }
+            }
+
+            // Función para llenar el tablero de la PC con barcos aleatorios
+            function llenarTableroPCAleatoriamente(tamaño) {
+                var tableroPC = [];
+
+                for (var i = 1; i <= tamaño; i++) {
+                    tableroPC[i] = [];
+
+                    for (var j = 1; j <= tamaño; j++) {
+                        var aleatorio = Math.random();
+                        if (aleatorio < 0.5) {
+                            tableroPC[i][j] = '🚢';
+                        } else {
+                            tableroPC[i][j] = '🌊';
+                        }
+                    }
+                }
+
+                return tableroPC;
+            }
+
+            function ataquePC() {
+                var celdasValidas = $('#tablaJugador td').not(':first-child, :first-child + td');
+
+                var celdasDisparadas = $('#tablaJugador td:contains("💥"), #tablaJugador td:contains("📍"), #tablaJugador td:contains("1"),#tablaJugador td:contains("B"),#tablaJugador td:contains("2"),#tablaJugador td:contains("3"),#tablaJugador td:contains("4"),#tablaJugador td:contains("5"),#tablaJugador td:contains("6"),#tablaJugador td:contains("7"),#tablaJugador td:contains("8"),#tablaJugador td:contains("9"),#tablaJugador td:contains("10"),#tablaJugador td:contains("A"),#tablaJugador td:contains("B"),#tablaJugador td:contains("C"),#tablaJugador td:contains("D"),#tablaJugador td:contains("F"),#tablaJugador td:contains("G"),#tablaJugador td:contains("H"),#tablaJugador td:contains("I"),#tablaJugador td:contains("J")');
+                celdasValidas = celdasValidas.not(celdasDisparadas);
+
+                var indiceAleatorio = Math.floor(Math.random() * celdasValidas.length);
+                var celdaSeleccionada = $(celdasValidas[indiceAleatorio]);
+
+                if (celdaSeleccionada.text() === '🚢') {
+                    celdaSeleccionada.text('💥');
+                } else {
+                    celdaSeleccionada.text('📍');
+                }
+            }
+
+            // Función para determinar si un jugador ha ganado
+            function ganarJuego() {
+                var celdasPC = $('#tablaPC td');
+                var celdasJugador = $('#tablaJugador td');
+
+                var barcosHundidosPC = 0;
+                var barcosHundidosJugador = 0;
+
+                celdasPC.each(function() {
+                    if ($(this).text() === '💥') {
+                        barcosHundidosPC++;
+                    }
+                });
+
+                celdasJugador.each(function() {
+                    if ($(this).text() === '💥') {
+                        barcosHundidosJugador++;
+                    }
+                });
+
+                if (barcosHundidosPC >= totalBarcos) {
+                    alert("¡Felicidades! ¡Has ganado!");
+                    location.reload();
+                }
+
+                if (barcosHundidosJugador >= totalBarcos) {
+                    alert("¡La PC ha ganado! Mejor suerte la próxima vez.");
+                    location.reload();
+                }
+            }
+
+            function calcularTotalBarcos(tamaño) {
+                var cantidadBarcos = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                return cantidadBarcos[tamaño - 1];
+            }
+        });
+    </script>
+</body>
+</html>
